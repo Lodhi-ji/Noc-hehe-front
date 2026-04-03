@@ -109,6 +109,15 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleResendInvite = async (email) => {
+        try {
+            const res = await api.post('/admin/users/resend-invite', { email });
+            toast.success(res.data.message);
+        } catch (error) {
+            toast.error('Failed to resend: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
     return (
         <div className="space-y-12 pb-12 animate-fade-in-up">
             <div>
@@ -293,7 +302,14 @@ const AdminDashboard = () => {
                                             <td className="py-3 pr-4 text-slate-500">{u.departmentId?.name || <span className="text-slate-300">—</span>}</td>
                                             <td className="py-3">
                                                 {u.password === 'PENDING_USER_NO_PASSWORD'
-                                                    ? <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">Not Registered</span>
+                                                    ? <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded-full">Inactive</span>
+                                                        <button
+                                                            onClick={() => handleResendInvite(u.email)}
+                                                            className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded-full hover:bg-indigo-100 transition-colors"
+                                                            title="Resend registration email"
+                                                        >↺ Resend</button>
+                                                    </div>
                                                     : <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full">Active</span>
                                                 }
                                             </td>
