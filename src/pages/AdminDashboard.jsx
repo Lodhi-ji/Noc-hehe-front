@@ -301,7 +301,7 @@ const AdminDashboard = () => {
                                             </td>
                                             <td className="py-3 pr-4 text-slate-500">{u.departmentId?.name || <span className="text-slate-300">—</span>}</td>
                                             <td className="py-3">
-                                                {u.password === 'PENDING_USER_NO_PASSWORD'
+                                                {u.name === 'Pending User'
                                                     ? <div className="flex items-center gap-2">
                                                         <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded-full">Inactive</span>
                                                         <button
