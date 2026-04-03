@@ -10,6 +10,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import StudentDashboard from './pages/StudentDashboard';
 import OfficerDashboard from './pages/OfficerDashboard';
 import TNPHeadDashboard from './pages/TNPHeadDashboard';
+import TNPOfficeDashboard from './pages/TNPOfficeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
 // Styled full-screen loading spinner
@@ -60,6 +61,11 @@ function App() {
               <TNPHeadDashboard />
             </ProtectedRoute>
           } />
+          <Route path="/tnpoffice/*" element={
+            <ProtectedRoute allowedRoles={['TNPOffice']}>
+              <TNPOfficeDashboard />
+            </ProtectedRoute>
+          } />
           <Route path="/admin/*" element={
             <ProtectedRoute allowedRoles={['Admin']}>
               <AdminDashboard />
@@ -71,6 +77,7 @@ function App() {
               user.role === 'Student' ? <Navigate to="/student" /> :
                 user.role === 'DeptOfficer' ? <Navigate to="/officer" /> :
                   user.role === 'TNPHead' ? <Navigate to="/tnphead" /> :
+                    user.role === 'TNPOffice' ? <Navigate to="/tnpoffice" /> :
                     <Navigate to="/admin" />
           } />
         </Routes>

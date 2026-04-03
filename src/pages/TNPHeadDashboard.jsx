@@ -46,7 +46,7 @@ const ExpandedDetails = ({ app }) => (
         <div>
           <p className="text-xs text-slate-500">Type & Duration</p>
           <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-indigo-700">{app.internshipType}</p>
+            <p className="text-sm font-bold text-indigo-700">{app.internshipType}{app.otherInternshipDescription ? ` (${app.otherInternshipDescription})` : ''}</p>
             <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase tracking-widest border border-slate-200">{calculateDuration(app.durationFrom, app.durationTo)}</span>
           </div>
           <p className="text-xs text-slate-600 mt-1">{app.durationFrom} to {app.durationTo}</p>
@@ -66,10 +66,16 @@ const ExpandedDetails = ({ app }) => (
     <div className="space-y-4">
       <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Review Documents</h4>
       <div className="flex flex-wrap gap-3">
+        {app.marksheet && (
+          <a href={formatFileUrl(app.marksheet)} target="_blank" rel="noreferrer" className="inline-flex items-center px-4 py-2.5 bg-white border border-rose-200 text-rose-700 rounded-xl text-xs font-bold hover:bg-rose-50 transition-all shadow-sm">
+            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            Marksheet
+          </a>
+        )}
         {app.mandatoryDocument && (
           <a href={formatFileUrl(app.mandatoryDocument)} target="_blank" rel="noreferrer" className="inline-flex items-center px-4 py-2.5 bg-white border border-rose-200 text-rose-700 rounded-xl text-xs font-bold hover:bg-rose-50 transition-all shadow-sm">
             <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-            SOP / Marksheet
+            SOP / Marksheet (Legacy)
           </a>
         )}
         {app.offerLetter && (
@@ -92,6 +98,14 @@ const ExpandedDetails = ({ app }) => (
         )}
       </div>
     </div>
+
+    {/* Statement of Purpose */}
+    {app.sopText && (
+      <div className="md:col-span-2">
+        <strong className="text-slate-900">Statement of Purpose:</strong>
+        <p className="mt-1 text-slate-600 whitespace-pre-wrap">{app.sopText}</p>
+      </div>
+    )}
 
     {/* Mentor & Addressee */}
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-200">
@@ -155,7 +169,6 @@ const AppCard = ({ app, actionType, remarks, setRemarks, handleAction }) => {
 
   const getGradient = () => {
     if (actionType === 'REVIEW') return 'bg-gradient-to-b from-amber-400 to-orange-500';
-    if (actionType === 'COLLECT') return 'bg-gradient-to-b from-blue-400 to-indigo-600';
     return 'bg-gradient-to-b from-slate-300 to-slate-400';
   };
 
@@ -208,6 +221,7 @@ const AppCard = ({ app, actionType, remarks, setRemarks, handleAction }) => {
         {showDetails && <ExpandedDetails app={app} />}
 
         <div className="mt-6 pt-5 border-t border-slate-100 flex flex-wrap gap-6 text-sm">
+          {app.marksheet && <a href={formatFileUrl(app.marksheet)} target="_blank" rel="noreferrer" className="inline-flex items-center font-bold text-rose-600 hover:text-rose-800 transition-colors"><svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> Marksheet</a>}
           {app.mandatoryDocument && <a href={formatFileUrl(app.mandatoryDocument)} target="_blank" rel="noreferrer" className="inline-flex items-center font-bold text-rose-600 hover:text-rose-800 transition-colors"><svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> SOP/Marksheet</a>}
           {app.offerLetter && <a href={formatFileUrl(app.offerLetter)} target="_blank" rel="noreferrer" className="inline-flex items-center font-bold text-indigo-600 hover:text-indigo-800 transition-colors"><svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> Offer Letter</a>}
           {app.statementOfObjective && <a href={formatFileUrl(app.statementOfObjective)} target="_blank" rel="noreferrer" className="inline-flex items-center font-bold text-indigo-600 hover:text-indigo-800 transition-colors"><svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> Statement</a>}
@@ -231,14 +245,6 @@ const AppCard = ({ app, actionType, remarks, setRemarks, handleAction }) => {
         </div>
       )}
 
-      {actionType === 'COLLECT' && (
-        <div className="w-full md:w-80 flex flex-col justify-center bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100 relative">
-          <button onClick={() => handleAction(app._id, 'COLLECTED')} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5 shadow-xl shadow-indigo-100 transition-all mb-3">
-            Mark Collected ✔
-          </button>
-          <p className="text-[10px] text-center font-black text-indigo-500 uppercase tracking-widest">Hardcopy pickup confirmation</p>
-        </div>
-      )}
     </div>
   );
 };
@@ -296,8 +302,10 @@ const TNPHeadDashboard = () => {
     }
   };
 
-  const pendingApps = applications.filter(a => a.status === 'UNDER_REVIEW_HEAD');
-  const collectingApps = applications.filter(a => a.status === 'READY_FOR_COLLECTION');
+  const pendingApps = useMemo(() => {
+    return applications.filter(a => a.status === 'UNDER_REVIEW_HEAD');
+  }, [applications]);
+
   const pastApps = useMemo(() => {
     return applications.filter(a => {
       const isHistorical = a.status !== 'UNDER_REVIEW_HEAD' && a.status !== 'READY_FOR_COLLECTION';
@@ -388,13 +396,6 @@ const TNPHeadDashboard = () => {
               {pendingApps.length > 0 && <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-black">{pendingApps.length}</span>}
             </button>
             <button
-              onClick={() => setActiveTab('collection')}
-              className={`px-8 py-2.5 text-sm transition-all duration-200 rounded-xl flex items-center gap-2 ${activeTab === 'collection' ? 'bg-white shadow-md text-indigo-700 font-bold' : 'text-slate-500 hover:text-slate-700 font-medium'}`}
-            >
-              Ready for Collection
-              {collectingApps.length > 0 && <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-black">{collectingApps.length}</span>}
-            </button>
-            <button
               onClick={() => setActiveTab('history')}
               className={`px-8 py-2.5 text-sm transition-all duration-200 rounded-xl ${activeTab === 'history' ? 'bg-white shadow-md text-indigo-700 font-bold' : 'text-slate-500 hover:text-slate-700 font-medium'}`}
             >
@@ -417,20 +418,6 @@ const TNPHeadDashboard = () => {
               />
             ) : pendingApps.map(app =>
               <AppCard key={app._id} app={app} actionType="REVIEW" remarks={remarks} setRemarks={setRemarks} handleAction={handleAction} />
-            )}
-          </div>
-        )}
-
-        {activeTab === 'collection' && (
-          <div className="space-y-6">
-            {collectingApps.length === 0 ? (
-              <EmptyState
-                title="No Pending Pickups"
-                message="No students are currently waiting to collect their NOC hardcopies."
-                icon={<svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>}
-              />
-            ) : collectingApps.map(app =>
-              <AppCard key={app._id} app={app} actionType="COLLECT" remarks={remarks} setRemarks={setRemarks} handleAction={handleAction} />
             )}
           </div>
         )}

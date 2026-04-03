@@ -18,10 +18,12 @@ api.interceptors.request.use(config => {
 });
 
 // Auto-logout on 401 (expired / invalid token)
+// Skip redirect on the login route itself — let the form handle that error
 api.interceptors.response.use(
   res => res,
   err => {
-    if (err.response?.status === 401) {
+    const isLoginRequest = err.config?.url?.includes('/auth/login');
+    if (err.response?.status === 401 && !isLoginRequest) {
       localStorage.removeItem('token');
       // Hard redirect — clears all React state and forces re-login
       window.location.href = '/login';
