@@ -11,7 +11,13 @@ const ExpandedDetails = ({ app }) => (
     <div><strong className="text-slate-900">Roll Number:</strong> {app.rollNumber}</div>
     <div><strong className="text-slate-900">Course/Branch:</strong> {app.degreeCourse} in {app.branch} {app.currentYear ? `(${app.currentYear}, ${app.yearSession})` : `(${app.yearSession})`}</div>
     <div><strong className="text-slate-900">Latest CPI & Contact:</strong> {app.latestCPI} | Ph: {app.contactNo}</div>
-    <div className="md:col-span-2"><strong className="text-slate-900">Internship Type:</strong> {app.internshipType}</div>
+    <div className="md:col-span-2"><strong className="text-slate-900">Internship Type:</strong> {app.internshipType}{app.otherInternshipDescription ? ` (${app.otherInternshipDescription})` : ''}</div>
+    {app.sopText && (
+      <div className="md:col-span-2">
+        <strong className="text-slate-900">Statement of Purpose:</strong>
+        <p className="mt-1 text-slate-600 whitespace-pre-wrap">{app.sopText}</p>
+      </div>
+    )}
     <div className="md:col-span-2"><strong className="text-slate-900">Org Address:</strong> {app.organizationAddress}</div>
 
     <div className="pt-4 mt-2 border-t border-slate-200">
@@ -39,7 +45,7 @@ const StudentDashboard = () => {
     internshipType: 'Regular Internship (6 weeks duration)', durationFrom: '', durationTo: '',
     companyName: '', organizationAddress: '', mentorName: '', mentorDesignation: '', mentorContact: '', mentorEmail: '',
     addresseeName: '', addresseeDesignation: '', addresseeContact: '', addresseeEmail: '',
-    offerLetter: null, statementOfObjective: null, mandatoryDocument: null, nocFormat: null, studentMessage: ''
+    offerLetter: null, statementOfObjective: null, nocFormat: null, marksheet: null, sopText: '', otherInternshipDescription: '', studentMessage: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -94,21 +100,27 @@ const StudentDashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.mandatoryDocument) {
-      toast.error('Please upload the mandatory SOP or Previous Semester Marksheet');
+    if (!formData.marksheet) {
+      toast.error('Please upload the Previous Semester Marksheet');
+      return;
+    }
+    if (!formData.sopText.trim()) {
+      toast.error('Please enter your Statement of Purpose');
       return;
     }
     setLoading(true);
     const data = new FormData();
     Object.keys(formData).forEach(key => {
-      if (!['offerLetter', 'statementOfObjective', 'mandatoryDocument', 'nocFormat'].includes(key)) {
+      if (!['offerLetter', 'statementOfObjective', 'nocFormat', 'marksheet', 'sopText', 'otherInternshipDescription'].includes(key)) {
         data.append(key, formData[key]);
       }
     });
     if (formData.offerLetter) data.append('offerLetter', formData.offerLetter);
     if (formData.statementOfObjective) data.append('statementOfObjective', formData.statementOfObjective);
-    if (formData.mandatoryDocument) data.append('mandatoryDocument', formData.mandatoryDocument);
     if (formData.nocFormat) data.append('nocFormat', formData.nocFormat);
+    if (formData.marksheet) data.append('marksheet', formData.marksheet);
+    data.append('sopText', formData.sopText);
+    data.append('otherInternshipDescription', formData.otherInternshipDescription);
 
     try {
       await api.post('/student/apply', data, { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -120,7 +132,7 @@ const StudentDashboard = () => {
         companyName: '', organizationAddress: '', mentorName: '', mentorDesignation: '',
         mentorContact: '', mentorEmail: '', addresseeName: '', addresseeDesignation: '',
         addresseeContact: '', addresseeEmail: '', offerLetter: null, statementOfObjective: null,
-        mandatoryDocument: null, nocFormat: null, studentMessage: ''
+        nocFormat: null, marksheet: null, sopText: '', otherInternshipDescription: '', studentMessage: ''
       });
       fetchApplications();
       setActiveTab('dashboard');
@@ -156,8 +168,10 @@ const StudentDashboard = () => {
       addresseeEmail: app.addresseeEmail || '',
       offerLetter: null,
       statementOfObjective: null,
-      mandatoryDocument: null,
       nocFormat: null,
+      marksheet: null,
+      sopText: '',
+      otherInternshipDescription: '',
       studentMessage: ''
     });
     setActiveTab('apply');
@@ -247,6 +261,7 @@ const StudentDashboard = () => {
                   {expandedAppId === app._id && <ExpandedDetails app={app} />}
 
                   <div className="mt-6 pt-5 border-t border-slate-100 flex flex-wrap gap-6 text-sm">
+                    {app.marksheet && <a href={formatFileUrl(app.marksheet)} target="_blank" rel="noreferrer" className="inline-flex items-center text-rose-600 font-bold hover:text-rose-800 transition-colors"><svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> View Marksheet</a>}
                     {app.mandatoryDocument && <a href={formatFileUrl(app.mandatoryDocument)} target="_blank" rel="noreferrer" className="inline-flex items-center text-rose-600 font-bold hover:text-rose-800 transition-colors"><svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> View SOP/Marksheet</a>}
                     {app.offerLetter && <a href={formatFileUrl(app.offerLetter)} target="_blank" rel="noreferrer" className="inline-flex items-center text-indigo-600 font-bold hover:text-indigo-800 transition-colors"><svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> View Offer Letter</a>}
                     {app.statementOfObjective && <a href={formatFileUrl(app.statementOfObjective)} target="_blank" rel="noreferrer" className="inline-flex items-center text-indigo-600 font-bold hover:text-indigo-800 transition-colors"><svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> View Statement</a>}
@@ -367,6 +382,13 @@ const StudentDashboard = () => {
                   </select>
                 </div>
 
+                {formData.internshipType === 'Other' && (
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Describe Internship Type <span className="text-slate-400">(Optional)</span></label>
+                    <input type="text" name="otherInternshipDescription" placeholder="Briefly describe the internship type" className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.otherInternshipDescription} onChange={handleInputChange} />
+                  </div>
+                )}
+
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Duration From <span className="text-rose-500">*</span></label>
                   <input type="date" name="durationFrom" required className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.durationFrom} onChange={handleInputChange} />
@@ -467,16 +489,14 @@ const StudentDashboard = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="md:col-span-2 group">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 block">SOP & Previous Semester Marksheet (Combined PDF) <span className="text-rose-500">*</span></label>
-                  <div className="relative">
-                    <input type="file" accept="application/pdf" required className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={e => setFormData({ ...formData, mandatoryDocument: e.target.files[0] })} />
-                    <div className={`p-6 border-2 border-dashed rounded-2xl text-center transition-all ${formData.mandatoryDocument ? 'bg-emerald-50 border-emerald-300' : 'bg-slate-50 border-slate-200 group-hover:border-indigo-300 group-hover:bg-indigo-50/30'}`}>
-                      <svg className={`mx-auto h-10 w-10 mb-3 ${formData.mandatoryDocument ? 'text-emerald-500' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                      <p className="text-sm font-bold text-slate-700">{formData.mandatoryDocument ? formData.mandatoryDocument.name : 'Click or drag to upload combined PDF'}</p>
-                      <p className="text-xs text-slate-400 mt-1">SOP + Previous Marksheet (Max 5MB)</p>
-                    </div>
-                  </div>
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Previous Semester Marksheet (PDF) <span className="text-rose-500">*</span></label>
+                  <input type="file" name="marksheet" accept=".pdf" required className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" onChange={(e) => setFormData({ ...formData, marksheet: e.target.files[0] })} />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Statement of Purpose <span className="text-rose-500">*</span></label>
+                  <textarea name="sopText" required placeholder="Write your Statement of Purpose here..." className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold resize-none" rows="5" value={formData.sopText} onChange={handleInputChange}></textarea>
                 </div>
 
                 <div className="group">

@@ -21,7 +21,15 @@ const Login = () => {
       toast.success('Login successful!');
       navigate('/');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to login');
+      const status = err.response?.status;
+      const message = err.response?.data?.message;
+      if (status === 401) {
+        setError('invalid_credentials');
+      } else if (status === 404) {
+        setError('not_found');
+      } else {
+        setError(message || 'Something went wrong. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -47,10 +55,35 @@ const Login = () => {
             <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Welcome Back</h2>
             <p className="text-slate-500 font-medium mb-8">Please enter your credentials to access your account.</p>
 
-            {error && <div className="bg-red-50 text-red-600 border border-red-200 p-4 rounded-xl mb-6 text-sm font-medium flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"></path></svg>
-              {error}
-            </div>}
+            {error && (
+              <div className="bg-red-50 border border-red-200 p-4 rounded-xl mb-6 text-sm">
+                <div className="flex items-start gap-2 text-red-600 font-medium">
+                  <svg className="w-5 h-5 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"></path></svg>
+                  <span>
+                    {error === 'invalid_credentials'
+                      ? 'Incorrect email or password.'
+                      : error === 'not_found'
+                      ? 'No account found with this email.'
+                      : error}
+                  </span>
+                </div>
+                {(error === 'invalid_credentials' || error === 'not_found') && (
+                  <div className="mt-2 pl-7">
+                    {error === 'not_found' ? (
+                      <span className="text-slate-600">
+                        Want to create one?{' '}
+                        <Link to="/register" className="text-indigo-600 font-bold hover:underline">Register here</Link>
+                      </span>
+                    ) : (
+                      <span className="text-slate-600">
+                        Forgot your password?{' '}
+                        <Link to="/forgot-password" className="text-indigo-600 font-bold hover:underline">Reset it here</Link>
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
