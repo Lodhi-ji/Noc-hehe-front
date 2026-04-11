@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { toast } from 'react-hot-toast';
+import { formatRole } from '../utils/formatRole';
 
 const ROLE_LABELS = {
     DeptOfficer: 'Dept Officer',
@@ -8,6 +9,7 @@ const ROLE_LABELS = {
     TNPOffice: 'TNP Office',
     Admin: 'Admin',
     Student: 'Student',
+    CDCChairperson: 'CDC Chairperson',
 };
 
 const ROLE_COLORS = {
@@ -16,6 +18,7 @@ const ROLE_COLORS = {
     TNPOffice: 'bg-amber-50 text-amber-700 border-amber-200',
     Admin: 'bg-rose-50 text-rose-700 border-rose-200',
     Student: 'bg-slate-50 text-slate-500 border-slate-200',
+    CDCChairperson: 'bg-indigo-50 text-indigo-700 border-indigo-200',
 };
 
 const AdminDashboard = () => {
@@ -23,6 +26,9 @@ const AdminDashboard = () => {
     const [newDept, setNewDept] = useState({ name: '', code: '' });
     const [routings, setRoutings] = useState([]);
     const [newRouting, setNewRouting] = useState({ departmentId: '', primaryApproverEmail: '', roleType: 'tnp_coordinator' });
+    const [globalRoles, setGlobalRoles] = useState([]);
+    const [newGlobalRole, setNewGlobalRole] = useState({ role: 'TNPHead', email: '' });
+    const [routingTab, setRoutingTab] = useState('department'); // 'department' or 'global'
     const [roleAssignForm, setRoleAssignForm] = useState({ email: '', role: 'DeptOfficer', departmentId: '' });
     const [provisionedUsers, setProvisionedUsers] = useState([]);
     const [fetching, setFetching] = useState(true);
@@ -31,6 +37,7 @@ const AdminDashboard = () => {
         document.title = 'RGIPT NOC — Admin Dashboard';
         fetchDepartments();
         fetchRoutings();
+        fetchGlobalRoles();
         fetchProvisionedUsers();
     }, []);
 
@@ -69,6 +76,15 @@ const AdminDashboard = () => {
         }
     };
 
+    const fetchGlobalRoles = async () => {
+        try {
+            const res = await api.get('/admin/global-roles');
+            setGlobalRoles(res.data);
+        } catch (error) {
+            console.error('Failed to load global roles:', error);
+        }
+    };
+
     const handleCreateDept = async (e) => {
         e.preventDefault();
         try {
@@ -94,6 +110,19 @@ const AdminDashboard = () => {
             fetchRoutings();
         } catch (error) {
             toast.error('Error updating config');
+        }
+    };
+
+    const handleUpdateGlobalRole = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await api.post('/admin/global-roles/assign', newGlobalRole);
+            toast.success(res.data.message);
+            setNewGlobalRole({ ...newGlobalRole, email: '' });
+            fetchGlobalRoles();
+            fetchProvisionedUsers();
+        } catch (error) {
+            toast.error('Error updating global role: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -163,6 +192,7 @@ const AdminDashboard = () => {
                                         <option value="DeptOfficer">TNP Coordinator / Dept Officer</option>
                                         <option value="TNPHead">TNP Head</option>
                                         <option value="TNPOffice">TNP Office (Collection Staff)</option>
+                                        <option value="CDCChairperson">CDC Chairperson</option>
                                         <option value="Admin">System Administrator</option>
                                     </select>
                                 </div>
@@ -239,25 +269,67 @@ const AdminDashboard = () => {
                         <h2 className="text-xl font-extrabold text-slate-800">Workflow Routing Engine</h2>
                     </div>
 
-                    <form onSubmit={handleUpdateRouting} className="space-y-5 mb-8 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                        <div>
-                            <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Subject Department</label>
-                            <select className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none font-medium shadow-sm transition-all text-slate-800" value={newRouting.departmentId} onChange={e => setNewRouting({ ...newRouting, departmentId: e.target.value })}>
-                                {departments.map(d => <option key={d._id} value={d._id}>{d.name} ({d.code})</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Target Approver Email</label>
-                            <div className="relative">
-                                <input type="email" placeholder="hod@rgipt.ac.in" required className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none font-medium shadow-sm transition-all text-slate-800 pl-10" value={newRouting.primaryApproverEmail} onChange={e => setNewRouting({ ...newRouting, primaryApproverEmail: e.target.value })} />
-                                <svg className="w-4 h-4 text-slate-400 absolute left-4 top-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>
+                    {/* Tabs */}
+                    <div className="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
+                        <button
+                            onClick={() => setRoutingTab('department')}
+                            className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${routingTab === 'department' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Department Routing
+                        </button>
+                        <button
+                            onClick={() => setRoutingTab('global')}
+                            className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${routingTab === 'global' ? 'bg-white text-purple-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Global Routing
+                        </button>
+                    </div>
+
+                    {/* Department Routing Form */}
+                    {routingTab === 'department' && (
+                        <form onSubmit={handleUpdateRouting} className="space-y-5 mb-8 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Subject Department</label>
+                                <select className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none font-medium shadow-sm transition-all text-slate-800" value={newRouting.departmentId} onChange={e => setNewRouting({ ...newRouting, departmentId: e.target.value })}>
+                                    {departments.map(d => <option key={d._id} value={d._id}>{d.name} ({d.code})</option>)}
+                                </select>
                             </div>
-                        </div>
-                        <button type="submit" className="w-full bg-emerald-600 text-white font-extrabold tracking-widest uppercase text-xs py-3.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5">Initialize Routing Rule</button>
-                    </form>
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Target Approver Email</label>
+                                <div className="relative">
+                                    <input type="email" placeholder="hod@rgipt.ac.in" required className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none font-medium shadow-sm transition-all text-slate-800 pl-10" value={newRouting.primaryApproverEmail} onChange={e => setNewRouting({ ...newRouting, primaryApproverEmail: e.target.value })} />
+                                    <svg className="w-4 h-4 text-slate-400 absolute left-4 top-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>
+                                </div>
+                            </div>
+                            <button type="submit" className="w-full bg-emerald-600 text-white font-extrabold tracking-widest uppercase text-xs py-3.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5">Initialize Routing Rule</button>
+                        </form>
+                    )}
+
+                    {/* Global Routing Form */}
+                    {routingTab === 'global' && (
+                        <form onSubmit={handleUpdateGlobalRole} className="space-y-5 mb-8 bg-purple-50 p-5 rounded-2xl border border-purple-100">
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Select Global Role</label>
+                                <select className="w-full px-4 py-2.5 bg-white border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none font-medium shadow-sm transition-all text-slate-800" value={newGlobalRole.role} onChange={e => setNewGlobalRole({ ...newGlobalRole, role: e.target.value })}>
+                                    <option value="TNPHead">TNP Head</option>
+                                    <option value="TNPOffice">TNP Office</option>
+                                    <option value="CDCChairperson">CDC Chairperson</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Target Approver Email</label>
+                                <div className="relative">
+                                    <input type="email" placeholder="head@rgipt.ac.in" required className="w-full px-4 py-2.5 bg-white border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none font-medium shadow-sm transition-all text-slate-800 pl-10" value={newGlobalRole.email} onChange={e => setNewGlobalRole({ ...newGlobalRole, email: e.target.value })} />
+                                    <svg className="w-4 h-4 text-slate-400 absolute left-4 top-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>
+                                </div>
+                            </div>
+                            <button type="submit" className="w-full bg-purple-600 text-white font-extrabold tracking-widest uppercase text-xs py-3.5 rounded-xl hover:bg-purple-700 shadow-lg shadow-purple-200 transition-all hover:-translate-y-0.5">Initialize Global Rule</button>
+                        </form>
+                    )}
 
                     <h3 className="text-xs font-bold text-slate-400 tracking-widest uppercase mb-3">Active Pipeline Hooks</h3>
                     <ul className="space-y-3">
+                        {/* Department Routing */}
                         {routings.map(route => (
                             <li key={route._id} className="p-4 bg-white border border-slate-100 shadow-sm rounded-xl hover:border-emerald-200 transition-colors relative overflow-hidden group">
                                 <div className="absolute left-0 top-0 h-full w-1.5 bg-emerald-400"></div>
@@ -269,6 +341,28 @@ const AdminDashboard = () => {
                                 </div>
                             </li>
                         ))}
+                        {/* Global Routing */}
+                        {globalRoles.map(role => {
+                            const roleDisplayNames = {
+                                TNPHead: 'TNP Head',
+                                TNPOffice: 'TNP Office',
+                                CDCChairperson: 'CDC Chairperson'
+                            };
+                            return (
+                                <li key={role._id} className="p-4 bg-white border border-slate-100 shadow-sm rounded-xl hover:border-purple-200 transition-colors relative overflow-hidden group">
+                                    <div className="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-purple-400 to-amber-400"></div>
+                                    <div className="font-extrabold text-slate-800 ml-2 flex items-center gap-2">
+                                        <span className="text-purple-600">Global Route</span>
+                                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full border border-purple-200">{roleDisplayNames[role.role] || role.role}</span>
+                                    </div>
+                                    <div className="text-xs font-bold text-slate-500 ml-2 mt-2 flex items-center">
+                                        <span className="bg-slate-100 text-slate-400 px-2 py-1 rounded border border-slate-200 mr-2">All Applications</span>
+                                        <span className="text-purple-500 mr-2">→</span>
+                                        <span className="text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-100">{role.email}</span>
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </div>
             </div>
@@ -305,10 +399,10 @@ const AdminDashboard = () => {
                                     {provisionedUsers.map(u => (
                                         <tr key={u._id} className="hover:bg-slate-50 transition-colors">
                                             <td className="py-3 pr-4 font-medium text-slate-700">{u.email}</td>
-                                            <td className="py-3 pr-4 text-slate-500">{u.isPending ? <span className="italic text-slate-300">Pending registration</span> : (u.name === 'Pending User' ? (ROLE_LABELS[u.role] || u.role) : u.name)}</td>
+                                            <td className="py-3 pr-4 text-slate-500">{u.isPending ? <span className="italic text-slate-300">Pending registration</span> : (u.name === 'Pending User' ? formatRole(u.role) : u.name)}</td>
                                             <td className="py-3 pr-4">
                                                 <span className={`text-xs font-extrabold px-2.5 py-1 rounded-full border ${ROLE_COLORS[u.role] || 'bg-slate-100 text-slate-500'}`}>
-                                                    {ROLE_LABELS[u.role] || u.role}
+                                                    {formatRole(u.role)}
                                                 </span>
                                             </td>
                                             <td className="py-3 pr-4 text-slate-500">{u.departmentId?.name || <span className="text-slate-300">—</span>}</td>
