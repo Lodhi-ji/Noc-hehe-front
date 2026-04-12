@@ -12,6 +12,7 @@ import OfficerDashboard from './pages/OfficerDashboard';
 import TNPHeadDashboard from './pages/TNPHeadDashboard';
 import TNPOfficeDashboard from './pages/TNPOfficeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import CDCChairpersonDashboard from './pages/CDCChairpersonDashboard';
 
 // Styled full-screen loading spinner
 const LoadingScreen = () => (
@@ -71,6 +72,11 @@ function App() {
               <AdminDashboard />
             </ProtectedRoute>
           } />
+          <Route path="/cdc-dashboard/*" element={
+            <ProtectedRoute allowedRoles={['CDCChairperson']}>
+              <CDCChairpersonDashboard />
+            </ProtectedRoute>
+          } />
 
           <Route path="/" element={
             !user ? <Navigate to="/login" /> :
@@ -78,7 +84,8 @@ function App() {
                 user.role === 'DeptOfficer' ? <Navigate to="/officer" /> :
                   user.role === 'TNPHead' ? <Navigate to="/tnphead" /> :
                     user.role === 'TNPOffice' ? <Navigate to="/tnpoffice" /> :
-                    <Navigate to="/admin" />
+                      user.role === 'CDCChairperson' ? <Navigate to="/cdc-dashboard" /> :
+                        <Navigate to="/admin" />
           } />
         </Routes>
       </div>

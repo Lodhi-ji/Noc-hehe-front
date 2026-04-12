@@ -307,6 +307,9 @@ const OfficerDashboard = () => {
               {getGreeting()}, Officer {user?.name?.split(' ')[0]}
             </h1>
             <p className="text-slate-500 mt-1 font-medium">{formatTodayDate()}</p>
+            <span className="text-indigo-600 font-extrabold uppercase tracking-widest text-sm mt-1 block">
+              {user?.department?.name || 'Department'} TPO
+            </span>
           </div>
         </div>
 

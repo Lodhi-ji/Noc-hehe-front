@@ -48,7 +48,8 @@ const Register = () => {
       toast.success('Registration successful!');
       navigate('/'); // root route handles role-based redirect
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error during registration');
+      const errorMsg = err.response?.data?.errors?.[0]?.msg || err.response?.data?.message || 'Error during registration';
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -114,12 +115,13 @@ const Register = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Password</label>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Password (min. 8 characters)</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
                     required
+                    minLength="8"
                     disabled={showOtpField}
                     placeholder="••••••••"
                     className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm pr-16 disabled:bg-slate-50 disabled:text-slate-400"
